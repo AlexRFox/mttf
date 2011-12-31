@@ -16,17 +16,47 @@ usage (void)
 	exit (1);
 }
 
-char *
+void
 parse_recur (void)
 {
-	int val;
-	char unit;
+	int val, plural;
+	char *unit_name, noval_unit, val_unit, *inp_unit;
 
-	sscanf (ev.repeat, "%d%c", &val, &unit);
+	plural = 0;
+	unit_name = "";
 
-	printf ("%d, %c\n", val, unit);
+	sscanf (ev.repeat, "%c", &noval_unit);
+	
+	sscanf (ev.repeat, "%d%c", &val, &val_unit);
 
-	return (strdup (""));
+	if (noval_unit == 'y' || noval_unit == 'm' || noval_unit == 'd') {
+		inp_unit = &noval_unit;
+		val = 1;
+	} else if (val_unit == 'y' || val_unit == 'm' || val_unit == 'd')
+		inp_unit = &val_unit;
+
+	if (*inp_unit == 'y') {
+		unit_name = "YEAR";
+	} else if (*inp_unit == 'm') {
+		unit_name = "MONTH";
+	} else if (*inp_unit == 'd') {
+		unit_name = "DAY";
+	}
+	
+	if (val < 1) {
+		printf ("invalid recurrence, ignoring\n");
+		return;
+	}
+
+	if ((ev.ical_recur = calloc (1, sizeof "RRULE:FREQ=;INTERVAL="
+				     + sizeof unit_name + sizeof val)) == NULL) {
+		fprintf (stderr, "memory error\n");
+		exit (1);
+	}
+
+	sprintf (ev.ical_recur, "RRULE:FREQ=%s;INTERVAL=%d", unit_name, val);
+
+	return;
 }
 
 int
@@ -52,7 +82,7 @@ main (int argc, char **argv)
 
 	if (optind < argc) {
 		ev.repeat = argv[optind++];
-		ev.ical_recur = parse_recur ();
+		parse_recur ();
 	}
 
 	if (optind != argc)
