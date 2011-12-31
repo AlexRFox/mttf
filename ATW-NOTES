@@ -1,0 +1,33 @@
+mttf-add:
+
+return json object
+
+json object needs:
+script to run
+next time to run
+recurrence
+title
+description
+
+================================================================
+
+mttf-add is designed to do the original building of the json object
+and place it in the queue. It doesn't have to deal with anything about
+timing, events themselves, or the scripts.
+
+================================================================
+
+expected usage:
+
+$ mttf-add birthday "atw birthday" 2011-09-05 -y
+creates an event with title "atw birthday" starting on 2011-09-05 and
+ repeating yearly on xx-09-05. assigns birthday script to this event
+
+$ mttf-add ham-license "ham radio license renewal" 2011-42-42 -y 10
+creates an event with title "ham radio license renewal" starting on
+ 2011-42-42 and repeating every 10 years on the same day. assigns
+ ham-license script to this event
+
+================================================================
+
+we should probably make a template event script
