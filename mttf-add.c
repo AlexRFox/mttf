@@ -5,6 +5,7 @@
 
 struct event {
 	char *script, *title, *date, *repeat, *ical_recur;
+	int run_year, run_month, run_day;
 };
 
 struct event ev;
@@ -88,11 +89,16 @@ main (int argc, char **argv)
 	if (optind != argc)
 		usage ();
 
+	sscanf (ev.date, "%d-%d-%d", &ev.run_year, &ev.run_month, &ev.run_day);
+
 	printf ("script: %s\n", ev.script);
 	printf ("title: %s\n", ev.title);
-	printf ("date: %s\n", ev.date);
+	printf ("run script on: %d-%.2d-%.2d\n", ev.run_year, ev.run_month, ev.run_day);
+
 	if (*ev.ical_recur)
 		printf ("recurrence: %s\n", ev.ical_recur);
+
+	printf ("(once implemented) adding initialization to queue\n");
 
 	return (0);
 }
