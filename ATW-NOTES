@@ -19,14 +19,14 @@ timing, events themselves, or the scripts.
 
 expected usage:
 
-$ mttf-add birthday "atw birthday" 2011-09-05 -y
-creates an event with title "atw birthday" starting on 2011-09-05 and
- repeating yearly on xx-09-05. assigns birthday script to this event
+$ mttf-add birthday "atw birthday" 2011-09-05
+creates a one time event using script birthday
 
-$ mttf-add ham-license "ham radio license renewal" 2011-42-42 -y 10
-creates an event with title "ham radio license renewal" starting on
- 2011-42-42 and repeating every 10 years on the same day. assigns
- ham-license script to this event
+$ mttf-add event "event name" 2011-12-31 y
+event which recurs yearly
+
+$ mttf-add event "event name" 2011-12-31 10y
+every 10 years
 
 ================================================================
 
