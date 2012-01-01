@@ -130,13 +130,6 @@ main (int argc, char **argv)
 
 	ev.args = *argv;
 
-#if 0
-	int i;
-	for (i = optind; i < argc; i++) {
-		printf ("%s\n", argv[i]);
-	}
-#endif
-	
 	numargs = argc;
 	args = argv;
 
