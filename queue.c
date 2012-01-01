@@ -1,33 +1,46 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "json.h"
 
 int
 main (int argc, char **argv)
 {
+	int idx, size;
 	FILE *f;
-	char *filename, jsonstr[10000], buf[1000];
-	struct json *arr, *inp_json;
+	char *jsonstr, *filename, *json_arg;
+	struct json *inp_json, *queue;
 
-	arr = json_make_arr ();
+	json_arg = NULL;
 
-	filename = "atwbday.json";
+	filename = "queue.json";
 	if ((f = fopen (filename, "r")) == NULL) {
 		fprintf (stderr, "error opening file\n");
 		return (1);
 	}
 
-	memset (&jsonstr, 0, sizeof jsonstr);
-	while (fgets (buf, sizeof buf, f) != NULL) {
-		sprintf (jsonstr, "%s%s", jsonstr, buf);
+	fseek (f, 0, SEEK_END);
+	size = ftell (f);
+	fseek (f, 0, SEEK_SET);
+	if ((jsonstr = malloc (size+1)) == NULL) {
+		fprintf (stderr, "out of memory\n");
+		return (1);
+	}
+	size = fread (jsonstr, 1, size, f);
+	jsonstr[size] = 0;
+
+	inp_json = json_decode (jsonstr);
+	queue = json_dup (inp_json);
+
+	idx = 0;
+	while (idx < json_array_size (queue)) {
+		cur = json_aref (queue, idx);
+		idx++;
+
+		
 	}
 
-	inp_json = json_dup (json_decode (jsonstr));
-
-	json_aset_json (arr, 0, inp_json);
-
-	json_print (inp_json);
-	json_print (arr);
+//	json_print (queue);
 
 	return (0);
 }

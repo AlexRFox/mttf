@@ -1,7 +1,7 @@
 CFLAGS = -g -Wall
 LIBS = -lm
 
-all: mttf-add birthday queue
+all: mttf-add birthday queue debug_arr_builder
 
 MTTF_ADD_OBJS = mttf-add.o json.o
 mttf-add: $(MTTF_ADD_OBJS)
@@ -14,6 +14,11 @@ birthday: $(BIRTHDAY_OBJS)
 QUEUE_OBJS = queue.o json.o
 queue: $(QUEUE_OBJS)
 	$(CC) $(CFLAGS) -o queue $(QUEUE_OBJS) -lm
+
+DEBUG_ARR_BUILDER_OBJS = debug_arr_builder.o json.o
+debug_arr_builder: $(DEBUG_ARR_BUILDER_OBJS)
+	$(CC) $(CFLAGS) -o debug_arr_builder $(DEBUG_ARR_BUILDER_OBJS) -lm
+
 clean:
 	rm -f *~ *.o 
 	rm -f mttf-add
