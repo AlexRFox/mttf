@@ -1,7 +1,9 @@
 {
   "script" :     "birthday",
   "recurrence" :     "RRULE:FREQ=YEAR;INTERVAL=1",
-  "nextrun" :     "2012-01-01",
+  "nextyear" :     "2012",
+  "nextmonth" :     "1",
+  "nextday" :     "1",
   "args" :     [
       "pace",
       "2012-01-30"

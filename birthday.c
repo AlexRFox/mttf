@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "json.h"
 
@@ -9,12 +10,18 @@ struct bday {
 void
 init (struct json *json)
 {
+	int year, month, day;
 	struct json *arr;
 
 	arr = json_objref (json, "args");
 
 	json_objset_num (json, "init", 0);
-	json_objset_str (json, "nextrun", json_aref_str (arr, 1));
+
+	sscanf (json_aref_str (arr, 1), "%d-%d-%d", &year, &month, &day);
+
+	json_objset_num (json, "nextyear", year);
+	json_objset_num (json, "nextmonth", month);
+	json_objset_num (json, "nextday", day);
 }
 
 void
@@ -26,17 +33,8 @@ alert (void)
 void
 rerun (struct json *json)
 {
-	int year, month, day;
-	char nextrun[100];
-	struct json *arr;
-
-	arr = json_objref (json, "args");
-
-	sscanf (json_objref_str (json, "nextrun"), "%d-%d-%d", &year, &month, &day);
-
-	snprintf (nextrun, sizeof nextrun, "%d-%02d-%02d", year + 1, month, day);
-
-	json_objset_str (json, "nextrun", nextrun);
+	json_objset_num (json, "nextyear",
+			 atoi (json_objref_str (json, "nextyear")) + 1);
 }
 
 void
@@ -78,7 +76,17 @@ main (int argc, char **argv)
 		rerun (outp_json);
 	}
 
-	json_print (outp_json);
+	fclose (f);
+
+	if ((f = fopen (filename, "w")) == NULL) {
+		fprintf (stderr, "error opening file\n");
+		return (1);
+	}
+
+	char *newjson;
+	newjson = json_encode (outp_json);
+	fwrite (newjson, 1, strlen (newjson), f);
+	fclose (f);
 
 	return (0);
 }

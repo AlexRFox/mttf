@@ -31,7 +31,10 @@ encode_event (struct event *evp, char **posargs, int posargs_count)
 
 	strftime (nextrun, sizeof nextrun, "%Y-%m-%d", &tm);
 
-	json_objset_str (jp, "nextrun", nextrun);
+	json_objset_num (jp, "nextyear", tm.tm_year+1900);
+	json_objset_num (jp, "nextmonth", tm.tm_mon+1);
+	json_objset_num (jp, "nextday", tm.tm_mday);
+
 	json_objset_str (jp, "args", evp->args);
 
 	arr = json_make_arr ();

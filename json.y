@@ -613,6 +613,8 @@ json_encode1 (struct json_encode_buf *bp, struct json *p)
 		json_encode_put (bp, '{');
 		for (p1 = p->children; p1; p1 = p1->sibling_next) {
 			json_encode_str (bp, p1->key->valstr);
+			json_encode_put (bp, ':');
+			json_encode1 (bp, p1);
 			if (p1->sibling_next)
 				json_encode_put (bp, ',');
 		}
