@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
+#include <time.h>
 #include "json.h"
 
 struct event {
@@ -20,9 +21,13 @@ encode_event (struct event *evp)
 	jp = json_make_obj ();
 	json_objset_str (jp, "script", evp->script);
 	json_objset_str (jp, "title", evp->title);
-	json_objset_str (jp, "descript", evp->descript);
+	if (evp->descript)
+		json_objset_str (jp, "descript", evp->descript);
 	json_objset_str (jp, "date", evp->date);
-	json_objset_str (jp, "recurrence", evp->ical_recur);
+	if (evp->ical_recur)
+		json_objset_str (jp, "recurrence", evp->ical_recur);
+
+	
 
 	return (jp);
 }
@@ -42,6 +47,8 @@ parse_recur (void)
 
 	plural = 0;
 	unit_name = "";
+	ev.descript = "";
+	ev.ical_recur = "";
 
 	sscanf (ev.repeat, "%c", &noval_unit);
 	
@@ -82,6 +89,7 @@ main (int argc, char **argv)
 {
 	int c;
 	struct json *json;
+	struct tm tm;
 
 	while ((c = getopt (argc, argv, "d:")) != EOF) {
 		switch (c) {
@@ -113,6 +121,14 @@ main (int argc, char **argv)
 
 	if (optind != argc)
 		usage ();
+
+	time_t t;
+	t = time (NULL);
+	tm = *localtime (&t);
+
+	printf ("%d\n", tm.tm_year + 1900);
+	printf ("%d\n", tm.tm_mon + 1);
+	printf ("%d\n", tm.tm_mday);
 
 	sscanf (ev.date, "%d-%d-%d", &ev.run_year, &ev.run_month, &ev.run_day);
 
