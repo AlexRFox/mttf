@@ -108,6 +108,7 @@ main (int argc, char **argv)
 
 	script = 0;
 
+	// might want to memset 0 ev to show it is empty here 
 	while ((c = getopt (argc, argv, "s:r:")) != EOF) {
 		switch (c) {
 		case 's':
@@ -122,7 +123,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (script == 0)
+	if (script == 0) // could test ev.script instead, reducing complexity by eliminating a variable
 		usage ();
 
 	if ((ev.args = calloc (argc, sizeof *argv)) == NULL) {
@@ -130,10 +131,12 @@ main (int argc, char **argv)
 		exit (1);
 	}
 
-	ev.args = *argv;
+//	ev.args = *argv;
+	for (i = 0; i < argc; i++)
+		ev.args[i] = strdup (argv[i]);
 
 	numargs = argc;
-	args = argv;
+	args = argv; // uesless assignment to args
 
 	json = encode_event (&ev);
 	json_print (json);
