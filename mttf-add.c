@@ -12,13 +12,10 @@ struct event {
 
 struct event ev;
 
-int numargs;
-char **args;
-
 struct json *
-encode_event (struct event *evp)
+encode_event (struct event *evp, char **posargs, int posargs_count)
 {
-	int idx, i;
+	int idx;
 	char nextrun[32];
 	time_t t;
 	struct json *jp, *arr;
@@ -32,15 +29,14 @@ encode_event (struct event *evp)
 	t = time (NULL);
 	tm = *localtime (&t);
 
-	sprintf (nextrun, "%d-%.2d-%.2d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+	strftime (nextrun, sizeof nextrun, "%Y-%m-%d", &tm);
 
 	json_objset_str (jp, "nextrun", nextrun);
 	json_objset_str (jp, "args", evp->args);
 
 	arr = json_make_arr ();
-	for (idx = optind; idx < numargs; idx++) {
-		i = idx - optind;
-		json_aset_str (arr, i, args[idx]);
+	for (idx = 0; idx < posargs_count; idx++) {
+		json_aset_str (arr, idx, posargs[idx]);
 	}
 	json_objset_json (jp, "args", arr);
 
@@ -90,12 +86,13 @@ parse_recur (void)
 	}
 
 	if ((ev.ical_recur = calloc (1, sizeof "RRULE:FREQ=;INTERVAL="
-				     + sizeof unit_name + sizeof val)) == NULL) {
+				     + strlen (unit_name) + sizeof val)) == NULL) {
 		fprintf (stderr, "memory error\n");
 		exit (1);
 	}
 
-	sprintf (ev.ical_recur, "RRULE:FREQ=%s;INTERVAL=%d", unit_name, val);
+	char buf[1000];
+	snprintf (buf, sizeof buf, "RRULE:FREQ=%s;INTERVAL=%d", unit_name, val);
 
 	return;
 }
@@ -103,16 +100,15 @@ parse_recur (void)
 int
 main (int argc, char **argv)
 {
-	int c, script;
+	int c;
 	struct json *json;
 
-	script = 0;
+	memset (&ev, 0, sizeof ev);
 
 	while ((c = getopt (argc, argv, "s:r:")) != EOF) {
 		switch (c) {
 		case 's':
 			ev.script = strdup (optarg);
-			script = 1;
 			break;
 		case 'r':
 			ev.repeat = strdup (optarg);
@@ -122,7 +118,7 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (script == 0)
+	if (ev.script == 0)
 		usage ();
 
 	if ((ev.args = calloc (argc, sizeof *argv)) == NULL) {
@@ -132,10 +128,7 @@ main (int argc, char **argv)
 
 	ev.args = *argv;
 
-	numargs = argc;
-	args = argv;
-
-	json = encode_event (&ev);
+	json = encode_event (&ev, &argv[optind], argc - optind);
 	json_print (json);
 	json_free (json);
 
