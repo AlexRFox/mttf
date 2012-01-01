@@ -808,10 +808,14 @@ json_aset_json (struct json *jp, int idx, struct json *val)
 		json_free (cp);
 	}
 	
-	cp = json_dup (val);
-
-	*prevp = cp;
-	cp->sibling_next = nextp;
+	if (val == NULL) {
+		if (nextp == NULL)
+			*prevp = NULL;
+	} else {
+		cp = json_dup (val);
+		*prevp = cp;
+		cp->sibling_next = nextp;
+	}
 }
 
 void
