@@ -116,8 +116,6 @@ main (int argc, char **argv)
 
 	sscanf (ev.date, "%d-%d-%d", &ev.run_year, &ev.run_month, &ev.run_day);
 
-	ev.title = "alex";
-
 	json = encode_event (&ev);
 	json_print (json);
 	json_free (json);
