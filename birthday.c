@@ -2,6 +2,43 @@
 #include <string.h>
 #include "json.h"
 
+struct bday {
+	char *who, *date;
+};
+
+void
+init (struct json *json)
+{
+	struct json *arr;
+
+	arr = json_objref (json, "args");
+
+	json_objset_num (json, "init", 0);
+	json_objset_str (json, "nextrun", json_aref_str (arr, 1));
+}
+
+void
+alert (void)
+{
+	printf ("do something alerty- possibly send user an email\n");
+}
+
+void
+rerun (struct json *json)
+{
+	int year, month, day;
+	char nextrun[100];
+	struct json *arr;
+
+	arr = json_objref (json, "args");
+
+	sscanf (json_objref_str (json, "nextrun"), "%d-%d-%d", &year, &month, &day);
+
+	snprintf (nextrun, sizeof nextrun, "%d-%02d-%02d", year + 1, month, day);
+
+	json_objset_str (json, "nextrun", nextrun);
+}
+
 void
 usage (void)
 {
@@ -13,7 +50,7 @@ main (int argc, char **argv)
 {
 	FILE *f;
 	char *filename, buf[1000], jsonstr[10000];
-	struct json *json;
+	struct json *inp_json, *outp_json;
 
 	if (argc != 2)
 		usage ();
@@ -29,21 +66,19 @@ main (int argc, char **argv)
 	while (fgets (buf, sizeof buf, f) != NULL) {
 		sprintf (jsonstr, "%s%s", jsonstr, buf);
 	}
+	
+	inp_json = json_decode (jsonstr);
 
-	json = json_decode (jsonstr);
+	outp_json = json_clone (inp_json);
 
-	if (strcmp (json_objref_str (json, "init"), "1") == 0) {
-		printf ("init\n");
+	if (strcmp (json_objref_str (inp_json, "init"), "1") == 0) {
+		init (outp_json);
 	} else {
-		printf ("running\n");
+		alert ();
+		rerun (outp_json);
 	}
 
-	printf ("%s\n", json_objref_str (json, "script"));
-	
-	struct json *arr;
-	arr = json_objref (json, "args");
-	printf ("%s\n", json_aref_str (arr, 0));
-	
+	json_print (outp_json);
 
 	return (0);
 }
