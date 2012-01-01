@@ -266,34 +266,6 @@ object_elt: STRING ':' value { $$ = $3; $$->key = $1; }
 %%
 
 struct json *
-json_clone (struct json *root)
-{
-	struct json *cp, *jp;
-	int idx;
-
-	if (root == NULL)
-		return (NULL);
-
-	switch (root->type) {
-	case JSON_STRING:
-		return (json_make_str (root->valstr));
-	case JSON_ARRAY:
-		jp = json_make_arr ();
-		for (cp = root->children, idx = 0; cp; cp = cp->sibling_next, idx++)
-			json_aset_json (jp, idx, json_clone (cp));
-		return (jp);
-	case JSON_OBJECT:
-		jp = json_make_obj ();
-		for (cp = root->children; cp; cp = cp->sibling_next)
-			json_objset_json (jp, cp->key->valstr, json_clone (cp));
-		return (jp);
-	}
-
-	/* NOTREACHED */
-	return (NULL);
-}
-
-struct json *
 json_decode (char const *input_str)
 {
 	struct json *jp;
@@ -725,7 +697,7 @@ json_dup (struct json *oldp)
 		exit (1);
 	}
 	newp->type = oldp->type;
-	newp->key = json_dup (newp->key);
+	newp->key = json_dup (oldp->key);
 	
 	tailp = &newp->children;
 	for (cp = oldp->children; cp; cp = cp->sibling_next) {
