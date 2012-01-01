@@ -44,6 +44,8 @@ encode_event (struct event *evp)
 	}
 	json_objset_json (jp, "args", arr);
 
+	json_objset_num (jp, "init", 1);
+
 	return (jp);
 }
 
@@ -130,13 +132,6 @@ main (int argc, char **argv)
 
 	ev.args = *argv;
 
-#if 0
-	int i;
-	for (i = optind; i < argc; i++) {
-		printf ("%s\n", argv[i]);
-	}
-#endif
-	
 	numargs = argc;
 	args = argv;
 
