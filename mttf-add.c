@@ -7,7 +7,7 @@
 #include "json.h"
 
 struct event {
-	char *script, *date, *repeat, *ical_recur, *args;
+	char *script, *date, *repeat, ical_recur[1000], *args;
 };
 
 struct event ev;
@@ -60,7 +60,7 @@ parse_recur (void)
 
 	plural = 0;
 	unit_name = "";
-	ev.ical_recur = "";
+	memset (&ev.ical_recur, 0, sizeof ev.ical_recur);
 
 	sscanf (ev.repeat, "%c", &noval_unit);
 	
@@ -85,14 +85,8 @@ parse_recur (void)
 		return;
 	}
 
-	if ((ev.ical_recur = calloc (1, sizeof "RRULE:FREQ=;INTERVAL="
-				     + strlen (unit_name) + sizeof val)) == NULL) {
-		fprintf (stderr, "memory error\n");
-		exit (1);
-	}
-
-	char buf[1000];
-	snprintf (buf, sizeof buf, "RRULE:FREQ=%s;INTERVAL=%d", unit_name, val);
+	snprintf (ev.ical_recur, sizeof ev.ical_recur,
+		  "RRULE:FREQ=%s;INTERVAL=%d", unit_name, val);
 
 	return;
 }
