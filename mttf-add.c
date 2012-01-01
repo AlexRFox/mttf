@@ -44,6 +44,8 @@ encode_event (struct event *evp)
 	}
 	json_objset_json (jp, "args", arr);
 
+	json_objset_num (jp, "init", 1);
+
 	return (jp);
 }
 
