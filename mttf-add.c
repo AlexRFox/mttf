@@ -2,13 +2,30 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <getopt.h>
+#include "json.h"
 
 struct event {
-	char *script, *title, *date, *repeat, *ical_recur;
+	char *script, *title, *date, *repeat, *ical_recur, *descript;
 	int run_year, run_month, run_day;
 };
 
 struct event ev;
+
+struct json *
+encode_event (struct event *evp)
+{
+	struct json *jp;
+
+	jp = json_make_obj ();
+	json_objset_str (jp, "script", evp->script);
+	json_objset_str (jp, "title", evp->title);
+	json_objset_str (jp, "descript", evp->descript);
+	json_objset_str (jp, "date", evp->date);
+	json_objset_str (jp, "recurrence", evp->ical_recur);
+
+	return (jp);
+}
 
 void
 usage (void)
@@ -64,9 +81,17 @@ int
 main (int argc, char **argv)
 {
 	int c;
+	struct json *json;
 
-	while ((c = getopt (argc, argv, "")) != EOF) {
+	while ((c = getopt (argc, argv, "d:")) != EOF) {
 		switch (c) {
+		case 'd':
+			if ((ev.descript = calloc (1, sizeof optarg)) == NULL) {
+				fprintf (stderr, "memory error\n");
+				exit (1);
+			}
+			ev.descript = optarg;
+			break;
 		default:
 			break;
 		}
@@ -91,14 +116,11 @@ main (int argc, char **argv)
 
 	sscanf (ev.date, "%d-%d-%d", &ev.run_year, &ev.run_month, &ev.run_day);
 
-	printf ("script: %s\n", ev.script);
-	printf ("title: %s\n", ev.title);
-	printf ("run script on: %d-%.2d-%.2d\n", ev.run_year, ev.run_month, ev.run_day);
+	ev.title = "alex";
 
-	if (*ev.ical_recur)
-		printf ("recurrence: %s\n", ev.ical_recur);
-
-	printf ("(once implemented) adding initialization to queue\n");
+	json = encode_event (&ev);
+	json_print (json);
+	json_free (json);
 
 	return (0);
 }
