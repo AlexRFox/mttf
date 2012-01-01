@@ -1,0 +1,10 @@
+{
+  "script" :     "birthday",
+  "recurrence" :     "RRULE:FREQ=YEAR;INTERVAL=1",
+  "nextrun" :     "2012-01-01",
+  "args" :     [
+      "epw",
+      "2012-11-19"
+    ],
+  "init" :     "1"
+}
