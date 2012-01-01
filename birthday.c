@@ -32,7 +32,18 @@ main (int argc, char **argv)
 
 	json = json_decode (jsonstr);
 
+	if (strcmp (json_objref_str (json, "init"), "1") == 0) {
+		printf ("init\n");
+	} else {
+		printf ("running\n");
+	}
 
+	printf ("%s\n", json_objref_str (json, "script"));
+	
+	struct json *arr;
+	arr = json_objref (json, "args");
+	printf ("%s\n", json_aref_str (arr, 0));
+	
 
 	return (0);
 }
