@@ -22,7 +22,7 @@ main (int argc, char **argv)
 		sprintf (jsonstr, "%s%s", jsonstr, buf);
 	}
 
-	inp_json = json_clone (json_decode (jsonstr));
+	inp_json = json_dup (json_decode (jsonstr));
 
 	json_aset_json (arr, 0, inp_json);
 
