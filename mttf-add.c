@@ -7,27 +7,42 @@
 #include "json.h"
 
 struct event {
-	char *script, *title, *date, *repeat, *ical_recur, *descript;
-	int run_year, run_month, run_day;
+	char *script, *date, *repeat, *ical_recur, *args;
 };
 
 struct event ev;
 
+int numargs;
+char **args;
+
 struct json *
 encode_event (struct event *evp)
 {
-	struct json *jp;
+	int idx, i;
+	char nextrun[32];
+	time_t t;
+	struct json *jp, *arr;
+	struct tm tm;
 
 	jp = json_make_obj ();
 	json_objset_str (jp, "script", evp->script);
-	json_objset_str (jp, "title", evp->title);
-	if (evp->descript)
-		json_objset_str (jp, "descript", evp->descript);
-	json_objset_str (jp, "date", evp->date);
 	if (evp->ical_recur)
 		json_objset_str (jp, "recurrence", evp->ical_recur);
 
-	
+	t = time (NULL);
+	tm = *localtime (&t);
+
+	sprintf (nextrun, "%d-%.2d-%.2d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+
+	json_objset_str (jp, "nextrun", nextrun);
+	json_objset_str (jp, "args", evp->args);
+
+	arr = json_make_arr ();
+	for (idx = optind; idx < numargs; idx++) {
+		i = idx - optind;
+		json_aset_str (arr, i, args[idx]);
+	}
+	json_objset_json (jp, "args", arr);
 
 	return (jp);
 }
@@ -35,7 +50,7 @@ encode_event (struct event *evp)
 void
 usage (void)
 {
-	printf ("bad usage\n");
+	printf ("usage: -s scriptname [-r recurrence_pattern] [arguments_to_script]\n");
 	exit (1);
 }
 
@@ -47,7 +62,6 @@ parse_recur (void)
 
 	plural = 0;
 	unit_name = "";
-	ev.descript = "";
 	ev.ical_recur = "";
 
 	sscanf (ev.repeat, "%c", &noval_unit);
@@ -87,50 +101,44 @@ parse_recur (void)
 int
 main (int argc, char **argv)
 {
-	int c;
+	int c, script;
 	struct json *json;
-	struct tm tm;
 
-	while ((c = getopt (argc, argv, "d:")) != EOF) {
+	script = 0;
+
+	while ((c = getopt (argc, argv, "s:r:")) != EOF) {
 		switch (c) {
-		case 'd':
-			if ((ev.descript = calloc (1, sizeof optarg)) == NULL) {
-				fprintf (stderr, "memory error\n");
-				exit (1);
-			}
-			ev.descript = optarg;
+		case 's':
+			ev.script = strdup (optarg);
+			script = 1;
 			break;
+		case 'r':
+			ev.repeat = strdup (optarg);
+			parse_recur ();
 		default:
 			break;
 		}
 	}
 
-	if (optind + 3 > argc)
+	if (script == 0)
 		usage ();
 
-	ev.script = argv[optind++];
-	ev.title = argv[optind++];
-	ev.date = argv[optind++];
-
-	ev.repeat = "";
-
-	if (optind < argc) {
-		ev.repeat = argv[optind++];
-		parse_recur ();
+	if ((ev.args = calloc (argc, sizeof *argv)) == NULL) {
+		fprintf (stderr, "memory error\n");
+		exit (1);
 	}
 
-	if (optind != argc)
-		usage ();
+	ev.args = *argv;
 
-	time_t t;
-	t = time (NULL);
-	tm = *localtime (&t);
-
-	printf ("%d\n", tm.tm_year + 1900);
-	printf ("%d\n", tm.tm_mon + 1);
-	printf ("%d\n", tm.tm_mday);
-
-	sscanf (ev.date, "%d-%d-%d", &ev.run_year, &ev.run_month, &ev.run_day);
+#if 0
+	int i;
+	for (i = optind; i < argc; i++) {
+		printf ("%s\n", argv[i]);
+	}
+#endif
+	
+	numargs = argc;
+	args = argv;
 
 	json = encode_event (&ev);
 	json_print (json);
