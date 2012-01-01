@@ -69,7 +69,7 @@ main (int argc, char **argv)
 	
 	inp_json = json_decode (jsonstr);
 
-	outp_json = json_clone (inp_json);
+	outp_json = json_dup (inp_json);
 
 	if (strcmp (json_objref_str (inp_json, "init"), "1") == 0) {
 		init (outp_json);
