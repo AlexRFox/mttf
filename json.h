@@ -27,6 +27,8 @@ char *json_aref_str (struct json *json, size_t idx);
 struct json *json_objref (struct json *json, char const *key);
 char *json_objref_str (struct json *json, char const *key);
 
+struct json *json_clone (struct json *json);
+
 /* returns one memory block with pointers and strings, caller frees */
 char **json_obj_keys (struct json *json);
 
