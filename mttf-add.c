@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #include <getopt.h>
@@ -22,23 +23,26 @@ queue_add (struct json *json)
 
 	filename = "queue.json";
 	if ((f = fopen (filename, "r")) == NULL) {
-		fprintf (stderr, "error opening file\n");
-		return;
-	}
+		fprintf (stderr, "queue does not exist, creating\n");
 
-	fseek (f, 0, SEEK_END);
-	size = ftell (f);
-	fseek (f, 0, SEEK_SET);
-	if ((jsonstr = malloc (size+1)) == NULL) {
-		fprintf (stderr, "out of memory\n");
-		return;
-	}
-	size = fread (jsonstr, 1, size, f);
-	fclose (f);
-	jsonstr[size] = 0;
+		queue = json_make_arr ();
+	} else {
+		fseek (f, 0, SEEK_END);
+		size = ftell (f);
+		fseek (f, 0, SEEK_SET);
 
-	oldqueue = json_decode (jsonstr);
-	queue = json_dup (oldqueue);
+		if ((jsonstr = malloc (size+1)) == NULL) {
+			fprintf (stderr, "out of memory\n");
+			return;
+		}
+		
+		size = fread (jsonstr, 1, size, f);
+		fclose (f);
+		jsonstr[size] = 0;
+		
+		oldqueue = json_decode (jsonstr);
+		queue = json_dup (oldqueue);
+	}
 	
 	json_aset_json (queue, json_array_size (queue), json);
 
@@ -75,8 +79,6 @@ encode_event (struct event *evp, char **posargs, int posargs_count)
 	json_objset_num (jp, "nextyear", tm.tm_year+1900);
 	json_objset_num (jp, "nextmonth", tm.tm_mon+1);
 	json_objset_num (jp, "nextday", tm.tm_mday);
-
-	json_objset_str (jp, "args", evp->args);
 
 	arr = json_make_arr ();
 	for (idx = 0; idx < posargs_count; idx++) {
