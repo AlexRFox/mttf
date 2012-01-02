@@ -12,6 +12,47 @@ struct event {
 
 struct event ev;
 
+void
+queue_add (struct json *json)
+{
+	int size;
+	char *filename, *jsonstr;
+	FILE *f;
+	struct json *oldqueue, *queue;
+
+	filename = "queue.json";
+	if ((f = fopen (filename, "r")) == NULL) {
+		fprintf (stderr, "error opening file\n");
+		return;
+	}
+
+	fseek (f, 0, SEEK_END);
+	size = ftell (f);
+	fseek (f, 0, SEEK_SET);
+	if ((jsonstr = malloc (size+1)) == NULL) {
+		fprintf (stderr, "out of memory\n");
+		return;
+	}
+	size = fread (jsonstr, 1, size, f);
+	fclose (f);
+	jsonstr[size] = 0;
+
+	oldqueue = json_decode (jsonstr);
+	queue = json_dup (oldqueue);
+	
+	json_aset_json (queue, json_array_size (queue), json);
+
+	if ((f = fopen (filename, "w")) == NULL) {
+		fprintf (stderr, "error opening file\n");
+		return;
+	}
+
+	char *newjson;
+	newjson = json_encode (queue);
+	fwrite (newjson, 1, strlen (newjson), f);
+	fclose (f);
+}
+
 struct json *
 encode_event (struct event *evp, char **posargs, int posargs_count)
 {
@@ -126,7 +167,9 @@ main (int argc, char **argv)
 	ev.args = *argv;
 
 	json = encode_event (&ev, &argv[optind], argc - optind);
-	json_print (json);
+
+	queue_add (json);
+
 	json_free (json);
 
 	return (0);

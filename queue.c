@@ -93,13 +93,11 @@ int
 main (int argc, char **argv)
 {
 	int idx, size, cur_idx;
-	char *jsonstr, *filename, *json_arg;
+	char *jsonstr, *filename;
 	struct json *inp_json, *queue, *cur, *new;
 	struct tm tm;
 	time_t t;
 	FILE *f;
-
-	json_arg = NULL;
 
 	filename = "queue.json";
 	if ((f = fopen (filename, "r")) == NULL) {
