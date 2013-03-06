@@ -4,7 +4,6 @@ name, parses the recurrence pattern and places all of it's positional
 arguments in a json array called args, for the script to pick up and
 deal with. Until the queue is developed, mttf-add simply builds the
 json object, prints it out and returns.
-<<<<<<< HEAD
 
 birthday is an example script to be called by an event. For now,
 birthday is a script which gets run yearly. In the future, birthday
@@ -12,5 +11,3 @@ will most likely have an alert gradient example.
 
 scripts are called with a single argument which is a temporary file
 that has the json object the script is to be called with
-=======
->>>>>>> origin/master

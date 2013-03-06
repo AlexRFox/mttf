@@ -24,5 +24,5 @@ json_read: $(JSON_READ_OBJS)
 	$(CC) $(CFLAGS) -o json_read $(JSON_READ_OBJS) -lm
 
 clean:
-	rm -f *~ *.o mttf-add
+	rm -f *~ *.o mttf-add birthday json_read queue
 
