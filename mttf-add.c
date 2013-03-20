@@ -54,6 +54,7 @@ queue_add (struct json *json)
 	char *newjson;
 	newjson = json_encode (queue);
 	fwrite (newjson, 1, strlen (newjson), f);
+	fwrite ("\n", 1, 1, f);
 	fclose (f);
 }
 
