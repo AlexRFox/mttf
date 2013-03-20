@@ -134,7 +134,7 @@ main (int argc, char **argv)
 		    <= tm.tm_mon+1
 		    && atoi (json_objref_str (cur, "nextday"))
 		    <= tm.tm_mday) {
-			idx = 0;
+//			idx = 0;
 
 			new = run_script (cur);
 
