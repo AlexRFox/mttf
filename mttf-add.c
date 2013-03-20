@@ -88,6 +88,7 @@ encode_event (struct event *evp, char **posargs, int posargs_count)
 	json_objset_json (jp, "args", arr);
 
 	json_objset_num (jp, "first", 1);
+	json_objset_num (jp, "returned", 0);
 
 	return (jp);
 }

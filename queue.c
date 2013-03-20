@@ -45,7 +45,7 @@ json_apop_json (struct json *json, int idx)
 struct json *
 run_script (struct json *json)
 {
-	int fd;
+	int fd, size;
 	char filename[1000], *jsonstr, cmd[1000], *script;
 	FILE *f;
 
@@ -59,6 +59,7 @@ run_script (struct json *json)
 	jsonstr = json_encode (json);
 
 	write (fd, jsonstr, strlen (jsonstr));
+	write (fd, "\n", 1);
 	close (fd);
 
 	script = json_objref_str (json, "script");
@@ -73,7 +74,6 @@ run_script (struct json *json)
 		return (NULL);
 	}
 
-	int size;
 	fseek (f, 0, SEEK_END);
 	size = ftell (f);
 	fseek (f, 0, SEEK_SET);
@@ -101,7 +101,7 @@ main (int argc, char **argv)
 	time_t t;
 	FILE *f;
 
-	filename = "queue.json";
+	filename = "/home/atw/mttf/queue.json";
 	if ((f = fopen (filename, "r")) == NULL) {
 		fprintf (stderr, "error opening file\n");
 		return (1);
@@ -127,6 +127,7 @@ main (int argc, char **argv)
 	idx = 0;
 	while (idx < json_array_size (queue)) {
 		cur = json_aref (queue, idx);
+		new = NULL;
 		idx++;
 
 		nextyear = strtol (json_objref_str (cur, "nextyear"), &p, 0);
@@ -137,8 +138,13 @@ main (int argc, char **argv)
 		    && nextmonth <= tm.tm_mon + 1
 		    && nextday <= tm.tm_mday) {
 			new = run_script (cur);
-			json_aset_json (newqueue,
-					json_array_size (newqueue), new);
+
+			if (strcmp (json_objref_str (new,
+						     "returned"), "1") == 0) {
+				json_aset_json (newqueue,
+						json_array_size (newqueue),
+						new);
+			}
 		} else {
 			json_aset_json (newqueue,
 					json_array_size (newqueue), cur);

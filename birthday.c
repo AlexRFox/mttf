@@ -14,6 +14,7 @@ init (struct json *json)
 	struct json *arr;
 
 	json_objset_num (json, "first", 0);
+	json_objset_num (json, "returned", 1);
 
 	arr = json_objref (json, "args");
 
