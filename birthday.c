@@ -13,11 +13,11 @@ init (struct json *json)
 	int year, month, day;
 	struct json *arr;
 
+	json_objset_num (json, "first", 0);
+
 	arr = json_objref (json, "args");
 
-	json_objset_num (json, "init", 0);
-
-	sscanf (json_aref_str (arr, 1), "%d-%d-%d", &year, &month, &day);
+	sscanf (json_aref_str (arr, 0), "%d-%d-%d", &year, &month, &day);
 
 	json_objset_num (json, "nextyear", year);
 	json_objset_num (json, "nextmonth", month);
@@ -41,6 +41,7 @@ void
 usage (void)
 {
 	printf ("usage: birthday json_obj_input_file\n");
+	exit (1);
 }
 
 int
@@ -69,7 +70,7 @@ main (int argc, char **argv)
 
 	outp_json = json_dup (inp_json);
 
-	if (strcmp (json_objref_str (inp_json, "init"), "1") == 0) {
+	if (strcmp (json_objref_str (inp_json, "first"), "1") == 0) {
 		init (outp_json);
 	} else {
 		alert ();

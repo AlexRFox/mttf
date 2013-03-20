@@ -93,9 +93,10 @@ run_script (struct json *json)
 int
 main (int argc, char **argv)
 {
-	int idx, size, cur_idx;
-	char *jsonstr, *filename;
-	struct json *inp_json, *queue, *cur, *new;
+	int idx, size;
+	long nextyear, nextmonth, nextday;
+	char *jsonstr, *filename, *p;
+	struct json *queue, *newqueue, *cur, *new;
 	struct tm tm;
 	time_t t;
 	FILE *f;
@@ -116,8 +117,9 @@ main (int argc, char **argv)
 	size = fread (jsonstr, 1, size, f);
 	jsonstr[size] = 0;
 
-	inp_json = json_decode (jsonstr);
-	queue = json_dup (inp_json);
+	queue = json_decode (jsonstr);
+
+	newqueue = json_make_arr ();
 
 	t = time (NULL);
 	tm = *localtime (&t);
@@ -125,23 +127,22 @@ main (int argc, char **argv)
 	idx = 0;
 	while (idx < json_array_size (queue)) {
 		cur = json_aref (queue, idx);
-		cur_idx = idx;
 		idx++;
 
-		if (atoi (json_objref_str (cur, "nextyear"))
-		    <= tm.tm_year+1900
-		    && atoi (json_objref_str (cur, "nextmonth"))
-		    <= tm.tm_mon+1
-		    && atoi (json_objref_str (cur, "nextday"))
-		    <= tm.tm_mday) {
-//			idx = 0;
+		nextyear = strtol (json_objref_str (cur, "nextyear"), &p, 0);
+		nextmonth = strtol (json_objref_str (cur, "nextmonth"), &p, 0);
+		nextday = strtol (json_objref_str (cur, "nextday"), &p, 0);
 
+		if (nextyear <= tm.tm_year + 1900
+		    && nextmonth <= tm.tm_mon + 1
+		    && nextday <= tm.tm_mday) {
 			new = run_script (cur);
-
-			json_aset_json (queue, json_array_size (queue),
-					new);
-			json_adel_json (queue, cur_idx);
-		}
+			json_aset_json (newqueue,
+					json_array_size (newqueue), new);
+		} else {
+			json_aset_json (newqueue,
+					json_array_size (newqueue), cur);
+		}			
 	}
 
 	fclose (f);
@@ -152,7 +153,7 @@ main (int argc, char **argv)
 	}
 
 	char *newjson;
-	newjson = json_encode (queue);
+	newjson = json_encode (newqueue);
 	fwrite (newjson, 1, strlen (newjson), f);
 	fwrite ("\n", 1, 1, f);
 	fclose (f);

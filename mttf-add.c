@@ -87,7 +87,7 @@ encode_event (struct event *evp, char **posargs, int posargs_count)
 	}
 	json_objset_json (jp, "args", arr);
 
-	json_objset_num (jp, "init", 1);
+	json_objset_num (jp, "first", 1);
 
 	return (jp);
 }
@@ -102,10 +102,9 @@ usage (void)
 void
 parse_recur (void)
 {
-	int val, plural;
+	int val;
 	char *unit_name, noval_unit, val_unit, *inp_unit;
 
-	plural = 0;
 	unit_name = "";
 	memset (&ev.ical_recur, 0, sizeof ev.ical_recur);
 
