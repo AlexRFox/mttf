@@ -149,7 +149,7 @@ main (int argc, char **argv)
 	while ((c = getopt (argc, argv, "s:r:")) != EOF) {
 		switch (c) {
 		case 's':
-			ev.script = strdup (optarg);
+			ev.script = realpath (optarg, NULL);
 			break;
 		case 'r':
 			ev.repeat = strdup (optarg);
@@ -174,6 +174,7 @@ main (int argc, char **argv)
 	queue_add (json);
 
 	json_free (json);
+	free (ev.script);
 
 	return (0);
 }
