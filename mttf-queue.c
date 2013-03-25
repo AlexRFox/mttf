@@ -111,6 +111,11 @@ main (int argc, char **argv)
 		close (idx);
 	}
 
+	if (chdir (home) == -1) {
+		printf ("chdir error %m\n");
+		exit (1);
+	}
+
 	if (setuid (uid) == -1) {
 		printf ("error switching to %s,%d: %m\n", username, uid);
 		return (1);
