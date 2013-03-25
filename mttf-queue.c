@@ -1,46 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
+#include <pwd.h>
 #include <time.h>
+#include <string.h>
 #include "json.h"
-
-void
-json_adel_json (struct json *json, int idx)
-{
-	int i;
-
-	for (i = idx+1; i < json_array_size (json); i++) {
-		char *str;
-		struct json *obj;
-
-		switch (json_get_type (json_aref (json, i))) {
-		case JSON_STRING:
-			str = json_aref_str (json, i);
-			json_aset_str (json, i-1, str);
-			break;
-		case JSON_ARRAY:
-		case JSON_OBJECT:
-			obj = json_aref (json, i);
-			json_aset_json (json, i-1, obj);
-			break;
-		}
-	}
-
-	json_aset_json (json, json_array_size (json)-1, NULL);
-}
-
-struct json *
-json_apop_json (struct json *json, int idx)
-{
-	struct json *jsonval;
-
-	jsonval = json_aref (json, idx);
-
-	json_adel_json (json, idx);
-
-	return (jsonval);
-}
 
 struct json *
 run_script (struct json *json)
@@ -93,16 +57,66 @@ run_script (struct json *json)
 int
 main (int argc, char **argv)
 {
-	int idx, size;
+	int size;
 	long nextyear, nextmonth, nextday;
-	char *jsonstr, *filename, *p;
+	struct passwd *pp;
 	struct json *queue, *newqueue, *cur, *new;
 	struct tm tm;
+	char *queuename, *home, *username, queuefile[10000], *jsonstr, *p;
+	int uid, pid, idx;
 	time_t t;
 	FILE *f;
 
-	filename = "/home/atw/mttf/queue.json";
-	if ((f = fopen (filename, "r")) == NULL) {
+	queuename = "queue.json";
+
+	while ((pp = getpwent ()) != NULL) {
+		home = pp->pw_dir;
+		uid = pp->pw_uid;
+		username = pp->pw_name;
+
+		sprintf (queuefile, "%s/%s", home, queuename);
+
+		if (access (queuefile, F_OK) == 0) {
+			pid = fork ();
+
+			if (pid == -1) {
+				printf ("fork error %m\n");
+				exit (1);
+			} else if (pid == 0) {
+				break;
+			} else {
+				continue;
+			}
+		}
+	}
+
+	endpwent ();
+
+	if (pid > 0) {
+		return (0);
+	}
+
+	pid = fork ();
+
+	if (pid == -1) {
+		printf ("fork error %m\n");
+		exit (1);
+	} else if (pid > 0) {
+		return (0);
+	}
+
+	setsid ();
+
+	for (idx = 3; idx < 100; idx++) {
+		close (idx);
+	}
+
+	if (setuid (uid) == -1) {
+		printf ("error switching to %s,%d: %m\n", username, uid);
+		return (1);
+	}
+
+	if ((f = fopen (queuefile, "r")) == NULL) {
 		fprintf (stderr, "error opening file\n");
 		return (1);
 	}
@@ -153,7 +167,7 @@ main (int argc, char **argv)
 
 	fclose (f);
 
-	if ((f = fopen (filename, "w")) == NULL) {
+	if ((f = fopen (queuefile, "w")) == NULL) {
 		fprintf (stderr, "error opening file\n");
 		return (1);
 	}
@@ -166,4 +180,3 @@ main (int argc, char **argv)
 
 	return (0);
 }
-
