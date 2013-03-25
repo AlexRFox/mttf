@@ -67,7 +67,7 @@ main (int argc, char **argv)
 	time_t t;
 	FILE *f;
 
-	queuename = "queue.json";
+	queuename = "mttf-queue.json";
 
 	while ((pp = getpwent ()) != NULL) {
 		home = pp->pw_dir;

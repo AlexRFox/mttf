@@ -21,7 +21,7 @@ queue_add (struct json *json)
 	FILE *f;
 	struct json *oldqueue, *queue;
 
-	filename = "queue.json";
+	filename = "mttf-queue.json";
 	if ((f = fopen (filename, "r")) == NULL) {
 		fprintf (stderr, "queue does not exist, creating\n");
 
