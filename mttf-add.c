@@ -150,6 +150,11 @@ main (int argc, char **argv)
 		switch (c) {
 		case 's':
 			ev.script = realpath (optarg, NULL);
+			if (ev.script == NULL) {
+				printf ("error finding script %s: %m\n",
+					optarg);
+				return (1);
+			}
 			break;
 		case 'r':
 			ev.repeat = strdup (optarg);
