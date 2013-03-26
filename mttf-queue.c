@@ -42,6 +42,7 @@ run_script (struct json *json)
 	int infd, outfd, size;
 	char infile[1000], outfile[1000], *jsonstr, cmd[1000], *script;
 	FILE *f;
+	int rc;
 
 	strcpy (infile, "/tmp/mttf-queue.XXXXXX");
 	if ((infd = mkstemp (infile)) < 0) {
@@ -69,13 +70,14 @@ run_script (struct json *json)
 	script = json_objref_str (json, "script");
 
 	if (script == 0) {
-		printf ("failed to run a script, stirng was empty\n");
+		printf ("failed to run a script, string was empty\n");
 		return (NULL);
 	}
 
 	sprintf (cmd, "%s %s", script, infile);
-	if (system (cmd) != 0) {
-		fprintf (stderr, "something bad happened\n");
+	if ((rc = system (cmd)) != 0) {
+		fprintf (stderr, "error %d running: %s\n",
+			 rc, cmd);
 		return (NULL);
 	}
 
@@ -140,61 +142,66 @@ main (int argc, char **argv)
 			jp->home = strdup (home);
 			jp->uid = uid;
 
-			if ( ! job_head) {
-				job_head = jp;
-			} else {
-				jp->next = job_head;
-				job_head = jp;
-			}
+			jp->next = job_head;
+			job_head = jp;
 		}
 	}
 
 	endpwent ();
 
 	for (jp = job_head; jp; jp = jp->next) {
-		pid = fork ();
+		fflush (NULL);
 
-		if (pid == -1) {
+		if ((pid = fork ()) < 0) {
 			printf ("fork error %m\n");
 			exit (1);
-		} else if (pid > 0) {
+		}
+
+		if (pid > 0) {
+			/* parent goes on to process remaining jobs */
+			sleep (1);
 			continue;
 		}
 
-		pid = fork ();
-		if (pid == -1) {
+		if ((pid = fork ()) < 0) {
 			printf ("fork error %m\n");
 			exit (1);
-		} else if (pid > 0) {
-			return (0);
 		}
 
-		fflush (NULL);
+		if (pid > 0) {
+			/* immediate child is done */
+			exit (0);
+		}
+
+		/* grandchild runs script */
 
 		setsid ();
 
-		if ((fd = open ("/dev/null", O_WRONLY)) == -1) {
+		if ((fd = open ("/dev/null", O_RDWR)) == -1) {
 			printf ("failed to open /dev/null: %m\n");
 			return (1);
 		}
 
-		if (dup2 (fd, 1) == -1) {
+		if (dup2 (fd, 0) == -1
+		    || dup2 (fd, 1) == -1) {
 			printf ("dup2 failed: %m\n");
 			return (1);
 		}
+
+		/* keeping file descriptor 2, stderr, for now */
 
 		for (idx = 3; idx < 100; idx++) {
 			close (idx);
 		}
 
 		if (chdir (jp->home) == -1) {
-			printf ("chdir error %m\n");
+			printf ("chdir error %m: %s\n", jp->home);
 			exit (1);
 		}
 
 		if (setuid (jp->uid) == -1) {
-			printf ("error switching to %s,%d: %m\n", jp->name,
-				jp->uid);
+			printf ("error switching to %s,%d: %m\n",
+				jp->name, jp->uid);
 			return (1);
 		}
 
@@ -263,7 +270,7 @@ main (int argc, char **argv)
 		fclose (f);
 
 		if (rename (newqf, queuefile) == -1) {
-			printf ("error copying in new queue: %m\n");
+			printf ("error renaming %m: %s %s\n", newqf, queuefile);
 			return (1);
 		}
 
