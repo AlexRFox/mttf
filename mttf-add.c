@@ -17,11 +17,14 @@ void
 queue_add (struct json *json)
 {
 	int size;
-	char *filename, *jsonstr;
+	char filename[10000], *queuename, *jsonstr;
 	FILE *f;
 	struct json *oldqueue, *queue;
 
-	filename = "mttf-queue.json";
+	queuename = "mttf-queue.json";
+
+	sprintf (filename, "%s/%s", getenv ("HOME"), queuename);
+
 	if ((f = fopen (filename, "r")) == NULL) {
 		fprintf (stderr, "queue does not exist, creating\n");
 
