@@ -159,13 +159,11 @@ main (int argc, char **argv)
 		case 'r':
 			ev.repeat = strdup (optarg);
 			parse_recur ();
+			break;
 		default:
 			break;
 		}
 	}
-
-	if (ev.script == 0)
-		usage ();
 
 	if ((ev.args = calloc (argc, sizeof *argv)) == NULL) {
 		fprintf (stderr, "memory error\n");
