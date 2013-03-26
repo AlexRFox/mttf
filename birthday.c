@@ -14,7 +14,6 @@ init (struct json *json)
 	struct json *arr;
 
 	json_objset_num (json, "first", 0);
-	json_objset_num (json, "returned", 1);
 
 	arr = json_objref (json, "args");
 
@@ -49,15 +48,15 @@ int
 main (int argc, char **argv)
 {
 	FILE *f;
-	char *filename, buf[1000], jsonstr[10000];
+	char *infile, *outfile, buf[1000], jsonstr[10000];
 	struct json *inp_json, *outp_json;
 
 	if (argc != 2)
 		usage ();
 
-	filename = argv[1];
+	infile = argv[1];
 
-	if ((f = fopen (filename, "r")) == NULL) {
+	if ((f = fopen (infile, "r")) == NULL) {
 		fprintf (stderr, "error opening file\n");
 		return (1);
 	}
@@ -69,6 +68,8 @@ main (int argc, char **argv)
 	
 	inp_json = json_decode (jsonstr);
 
+	fclose (f);
+
 	outp_json = json_dup (inp_json);
 
 	if (strcmp (json_objref_str (inp_json, "first"), "1") == 0) {
@@ -78,16 +79,16 @@ main (int argc, char **argv)
 		rerun (outp_json);
 	}
 
-	fclose (f);
-
-	if ((f = fopen (filename, "w")) == NULL) {
-		fprintf (stderr, "error opening file\n");
+	outfile = json_objref_str (inp_json, "outfile");
+	if ((f = fopen (outfile, "w")) == NULL) {
+		fprintf (stderr, "error opening %s for writing: %m\n", outfile);
 		return (1);
 	}
 
 	char *newjson;
 	newjson = json_encode (outp_json);
 	fwrite (newjson, 1, strlen (newjson), f);
+	fwrite ("\n", 1, 1, f);
 	fclose (f);
 
 	return (0);

@@ -15,12 +15,10 @@ struct job {
 
 struct job *job_head;
 
-int foreground;
-
 void
 usage (void)
 {
-	printf ("usage: mttf-queue [-f]\n");
+	printf ("usage: mttf-queue\n");
 	exit (1);
 }
 
@@ -37,35 +35,52 @@ xcalloc (unsigned int a, unsigned int b)
 	return (p);
 }
 
+/* caller must free result */
 struct json *
 run_script (struct json *json)
 {
-	int fd, size;
-	char filename[1000], *jsonstr, cmd[1000], *script;
+	int infd, outfd, size;
+	char infile[1000], outfile[1000], *jsonstr, cmd[1000], *script;
 	FILE *f;
 
-	strcpy (filename, "/tmp/queue.XXXXXX");
-	if ((fd = mkstemp (filename)) < 0) {
+	strcpy (infile, "/tmp/mttf-queue.XXXXXX");
+	if ((infd = mkstemp (infile)) < 0) {
 		fprintf (stderr, "can't create temporary file %s",
-			 filename);
+			 infile);
 		return (NULL);
 	}
 
+	strcpy (outfile, "/tmp/mttf-queue.XXXXXX");
+	if ((outfd = mkstemp (outfile)) < 0) {
+		fprintf (stderr, "can't create temporary file %s",
+			 infile);
+		return (NULL);
+	}
+	close (outfd);
+
+	json_objset_str (json, "outfile", outfile);
+
 	jsonstr = json_encode (json);
 
-	write (fd, jsonstr, strlen (jsonstr));
-	write (fd, "\n", 1);
-	close (fd);
+	write (infd, jsonstr, strlen (jsonstr));
+	write (infd, "\n", 1);
+	close (infd);
 
 	script = json_objref_str (json, "script");
-	sprintf (cmd, "%s %s", script, filename);
+
+	if (script == 0) {
+		printf ("failed to run a script, stirng was empty\n");
+		return (NULL);
+	}
+
+	sprintf (cmd, "%s %s", script, infile);
 	if (system (cmd) != 0) {
 		fprintf (stderr, "something bad happened\n");
 		return (NULL);
 	}
 
-	if ((f = fopen (filename, "r")) == NULL) {
-		fprintf (stderr, "error opening %s: %m\n", filename);
+	if ((f = fopen (outfile, "r")) == NULL) {
+		fprintf (stderr, "error opening %s: %m\n", outfile);
 		return (NULL);
 	}
 
@@ -80,7 +95,8 @@ run_script (struct json *json)
 	jsonstr[size] = 0;
 
 	fclose (f);
-	remove (filename);
+	remove (infile);
+	remove (outfile);
 
 	return (json_decode (jsonstr));
 }
@@ -91,7 +107,7 @@ main (int argc, char **argv)
 	int size, uid, pid, idx, c, fd, count;
 	long nextyear, nextmonth, nextday;
 	struct passwd *pp;
-	struct json *queue, *newqueue, *cur, *new;
+	struct json *queue, *newq, *cur, *new;
 	struct tm tm;
 	struct job *jp;
 	char *queuename, *home, *name, queuefile[10000], *jsonstr, newqf[10000];
@@ -100,19 +116,14 @@ main (int argc, char **argv)
 
 	queuename = "mttf-queue.json";
 
-	foreground = 0;
-
 	while ((c = getopt (argc, argv, "f")) != EOF) {
 		switch (c) {
-		case 'f':
-			foreground = 1;
-			break;
 		default:
 			break;
 		}
 	}
 
-	if (optind > 2)
+	if (optind > 1)
 		usage ();
 
 	while ((pp = getpwent ()) != NULL) {
@@ -160,18 +171,16 @@ main (int argc, char **argv)
 
 		fflush (NULL);
 
-		if (!foreground) {
-			setsid ();
+		setsid ();
 
-			if ((fd = open ("/dev/null", O_WRONLY)) == -1) {
-				printf ("failed to open /dev/null: %m\n");
-				return (1);
-			}
+		if ((fd = open ("/dev/null", O_WRONLY)) == -1) {
+			printf ("failed to open /dev/null: %m\n");
+			return (1);
+		}
 
-			if (dup2 (fd, 1) == -1) {
-				printf ("dup2 failed: %m\n");
-				return (1);
-			}
+		if (dup2 (fd, 1) == -1) {
+			printf ("dup2 failed: %m\n");
+			return (1);
 		}
 
 		for (idx = 3; idx < 100; idx++) {
@@ -208,7 +217,7 @@ main (int argc, char **argv)
 
 		queue = json_decode (jsonstr);
 
-		newqueue = json_make_arr ();
+		newq = json_make_arr ();
 
 		t = time (NULL);
 		tm = *localtime (&t);
@@ -226,16 +235,14 @@ main (int argc, char **argv)
 			    && nextday <= tm.tm_mday) {
 				new = run_script (cur);
 
-// clean up "returned"
-				if (strcmp (json_objref_str (new,
-							     "returned"), "1") == 0) {
-					json_aset_json (newqueue,
-							json_array_size (newqueue),
+				if (new) {
+					json_aset_json (newq,
+							json_array_size (newq),
 							new);
 				}
 			} else {
-				json_aset_json (newqueue,
-						json_array_size (newqueue),
+				json_aset_json (newq,
+						json_array_size (newq),
 						cur);
 			}
 		}
@@ -250,7 +257,7 @@ main (int argc, char **argv)
 		}
 
 		char *newjson;
-		newjson = json_encode (newqueue);
+		newjson = json_encode (newq);
 		fwrite (newjson, 1, strlen (newjson), f);
 		fwrite ("\n", 1, 1, f);
 		fclose (f);
